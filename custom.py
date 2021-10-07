@@ -31,7 +31,7 @@ class CustomImageDataset(Dataset):
         
         img = io.imread(img_path)
         y_label = torch.tensor(int(self.img_labels.iloc[idx,2]))
-        if self.transforms is not None:
+        if self.transforms is not None:  # AttributeError: 'CustomImageDataset' object has no attribute 'transforms'
             image = self.transforms(image)
           
         return (image, y_label)
