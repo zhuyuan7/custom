@@ -12,63 +12,8 @@ from torch.utils.data.dataset import random_split
 import torch.optim as optim
 from skimage import io
 import torch.nn.functional as F 
-
-
-class CustomImageDataset(Dataset):
-    def __init__(self, annotations_file, img_dir, transforms=None): # 내가 필요한 것들 (데이터 셋을 가져와서 선처리)
-        self.img_labels = pd.read_csv(annotations_file)
-        self.img_dir = img_dir
-        self.transforms = transforms
-        
-
-    
-    def __len__(self): # 데이터 셋의 길이 반환
-        return len(self.img_labels)
-
-    
-    def __getitem__(self, idx):  # 데이터 셋에서  한 개의 데이터를 가져오는 함수 정의 , #샘플 반환(이미지와 라벨 dict형태로반환)
-        #img_file = glob.glob(os.path.join(img_dir, "*.jpg"))
-        img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx,0])
-        image = io.imread(img_path)
-
-        #image = Image.open(self.image_ids[index]).convert('RGB')
-        y_label = torch.tensor(int(self.img_labels.iloc[idx,2]))
-        if self.transforms is not None:
-            image = self.transforms(image)
-          
-        return (image, y_label)
-
-        
-# Simple CNN
-class CNN(nn.Module):
-    def __init__(self, in_channels=1, num_classes=10):
-        super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(
-            in_channels=in_channels,
-            out_channels=8,
-            kernel_size=(3, 3),
-            stride=(1, 1),
-            padding=(1, 1),
-        )
-        self.pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
-        self.conv2 = nn.Conv2d(
-            in_channels=8,
-            out_channels=16,
-            kernel_size=(3, 3),
-            stride=(1, 1),
-            padding=(1, 1),
-        )
-        self.fc1 = nn.Linear(16 * 7 * 7, num_classes)
-
-    def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = self.pool(x)
-        x = F.relu(self.conv2(x))
-        x = self.pool(x)
-        x = x.reshape(x.shape[0], -1)
-        x = self.fc1(x)
-        return x
-
+import model
+import custom
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -90,7 +35,7 @@ print("ok")
 
 
 # Load Data
-dataset = CustomImageDataset(
+dataset = custom.CustomImageDataset(
     annotations_file="/home/joo/archive/train.csv",
     img_dir="/home/joo/archive/train_images",
     transforms = transforms
@@ -112,7 +57,7 @@ for X, y in train_loader:
     
 # Model
 
-model = CNN(in_channels=in_channels, num_classes=num_classes).to(device)
+model = model.CNN(in_channels=in_channels, num_classes=num_classes).to(device)
 #model = torchvision.models.wide_resnet50_2(pretrained=True)
 #model.to(device)
 
