@@ -17,7 +17,7 @@ class CustomImageDataset(Dataset):
     def __init__(self, annotations_file, img_dir, transforms=None): # 내가 필요한 것들 (데이터 셋을 가져와서 선처리)
         self.img_labels = pd.read_csv(annotations_file)
         self.img_dir = img_dir
-        self.tranforms = transforms
+        self.transforms = transforms
         
 
     
