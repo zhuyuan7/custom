@@ -11,11 +11,11 @@ Checking accuracy on Test Set
 Got 3253 / 10000 with accuracy 32.53
 <br>
 <br>
-
+<br>
 
 epoch = 50  <br>
  <br>
- <br>
+ 
 Checking accuracy on Training Set
 Got 34479 / 50000 with accuracy 68.96
 
