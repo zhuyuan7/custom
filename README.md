@@ -1,6 +1,7 @@
 # custom
 
-epoch = 10 
+epoch = 10  <br>
+ <br>
 Cost at epoch 0 is 3.535306678708557 <br>
 Cost at epoch 1 is 2.9051206486914163 <br>
 Cost at epoch 2 is 2.648383441178695 <br>
