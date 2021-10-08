@@ -54,13 +54,10 @@ test_dataset = CustomImageDataset(
     transforms = transforms
     )
 
-
-
 print(len(dataset), len(test_dataset))
 
 
 #lengths = [int(len(dataset)*0.8), int(len(dataset)*0.2)]
-
 #train_set, test_set = torch.utils.data.random_split(dataset, lengths)
 
 
@@ -70,17 +67,14 @@ test_loader = DataLoader(test_dataset , batch_size=batch_size, shuffle=True, num
 
 
 
-
 for X, y in train_loader:
-    print(X) #tesor
+    print(X) # tesor
     print(y) # label
     break
     
 # Model
-#model = model.CNN().to(device)
 model = CNN(in_channels=in_channels, num_classes=num_classes).to(device)
-#model = torchvision.models.wide_resnet50_2(pretrained=True)
-#model.to(device)
+
 
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()  # nn.CrossEntropyLoss()의 경우 기본적으로 LogSoftmax()가 내장. 
