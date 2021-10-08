@@ -35,7 +35,8 @@ num_epochs = 10
 
 transforms = transforms.Compose(  # 쉽게 말해 우리의 데이터를 전처리하는 패키지.
     [transforms.ToTensor(),
-     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])  # 이미지의 경우 픽셀 값 하나는 0 ~ 255 값을 갖는다. 하지만 ToTensor()로 타입 변경시 0 ~ 1 사이의 값으로 바뀜.
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+     #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])  # 이미지의 경우 픽셀 값 하나는 0 ~ 255 값을 갖는다. 하지만 ToTensor()로 타입 변경시 0 ~ 1 사이의 값으로 바뀜.
 
 print("ok")   
 
