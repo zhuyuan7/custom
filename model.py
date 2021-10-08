@@ -1,5 +1,4 @@
 import os 
-import glob
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -17,6 +16,45 @@ import torch.nn.functional as F
 
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+# Simple CNN
+class CNN(nn.Module):
+    def __init__(self, in_channels=1, num_classes=100):
+        super(CNN, self).__init__()
+        self.conv1 = nn.Conv2d(
+            in_channels=in_channels,
+            out_channels=8,
+            kernel_size=(3, 3),
+            stride=(1, 1),
+            padding=(1, 1),
+        )
+        self.pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
+        self.conv2 = nn.Conv2d(
+            in_channels=8,
+            out_channels=16,
+            kernel_size=(3, 3),
+            stride=(1, 1),
+            padding=(1, 1),
+        )
+        self.fc1 = nn.Linear(1024, num_classes) 
+        # RuntimeError: Function AddmmBackward returned an invalid gradient at index 1 - got [64, 784] but expected shape compatible with [64, 1024]
+
+
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = x.reshape(x.shape[0], -1)
+        x = self.fc1(x)
+        return x
+
+
+print(CNN)
+
+
 
 '''
 class CNN(nn.Module):
@@ -81,6 +119,7 @@ class CNN(nn.Module):
 
 
 '''
+<<<<<<< HEAD
 
 # Simple CNN
 class CNN(nn.Module):
@@ -122,3 +161,5 @@ class CNN(nn.Module):
         #print("fc1(x) 연산 후",x.size()) # ([64, 100])
         return x
         
+=======
+>>>>>>> cbe75ae5f3de4a87a31c8b773dce1e2064fee19c
