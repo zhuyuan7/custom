@@ -141,3 +141,7 @@ check_accuracy(train_loader, model)
 
 print("Checking accuracy on Test Set")
 check_accuracy(test_loader, model)
+
+
+
+
