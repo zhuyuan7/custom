@@ -1,5 +1,4 @@
 import os 
-import glob
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -12,8 +11,9 @@ from torch.utils.data.dataset import random_split
 import torch.optim as optim
 from skimage import io
 import torch.nn.functional as F 
-import model
-import custom
+from model import CNN
+# import custom
+from custom import CustomImageDataset
 import os
 
 
@@ -22,33 +22,33 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Set device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # 다른 Gpu 사용 어떻게 하는 지 
 print(f"Using {device} System")
 
 
 # Hyperparameters
 in_channels = 3
 num_classes = 100
-learning_rate = 1e-3
-batch_size = 64
+learning_rate = 1e-3  #10 의 -3승
+batch_size = 64  # 2의 승수 사용  한 minibache당 데이터수가 64, 남는 거는 자유롭게 
 num_epochs = 10
 
-transforms = transforms.Compose(  # 쉽게 말해 우리의 데이터를 전처리하는 패키지.
-    [transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-     #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])  # 이미지의 경우 픽셀 값 하나는 0 ~ 255 값을 갖는다. 하지만 ToTensor()로 타입 변경시 0 ~ 1 사이의 값으로 바뀜.
+transforms = transforms.Compose(   # 쉽게 말해 우리의 데이터를 전처리하는 패키지. # 이미지의 경우 픽셀 값 하나는 0 ~ 255 값을 갖는다. 
+    [transforms.ToTensor(),   # ToTensor()로 타입 변경시 0 ~ 1 사이의 값으로 바뀜
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])   # -1~ 1 사이로 normalize 함
+    #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])  
 
 print("ok")   
 
 
 # Load Data
-dataset = custom.CustomImageDataset(
+dataset = CustomImageDataset(
     annotations_file="/home/joo/archive/train.csv",
     img_dir="/home/joo/archive/train_images",
     transforms = transforms
     )
 
-test_dataset = custom.CustomImageDataset(
+test_dataset = CustomImageDataset(
     annotations_file="/home/joo/archive/test.csv",
     img_dir="/home/joo/archive/test_images",
     transforms = transforms
@@ -72,13 +72,13 @@ test_loader = DataLoader(test_dataset , batch_size=batch_size, shuffle=True, num
 
 
 for X, y in train_loader:
-    print(X)
-    print(y)
+    print(X) #tesor
+    print(y) # label
     break
     
 # Model
 #model = model.CNN().to(device)
-model = model.CNN(in_channels=in_channels, num_classes=num_classes).to(device)
+model = CNN(in_channels=in_channels, num_classes=num_classes).to(device)
 #model = torchvision.models.wide_resnet50_2(pretrained=True)
 #model.to(device)
 
@@ -89,30 +89,31 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 
 
-
+model.train()
 # Train Network
 for epoch in range(num_epochs):
     losses = []
 
     for batch_idx, (data, targets) in enumerate(train_loader):
         # Get data to cuda if possible
-        data = data.to(device=device)
-        targets = targets.to(device=device)
+        data = data.to(device=device) # 학습용 data 불러옴 (32*32)
+        targets = targets.to(device=device) 
 
         # forward
-        scores = model(data)
-        loss = criterion(scores, targets) 
-
-        losses.append(loss.item())
+        scores = model(data) # score 구함
+        loss = criterion(scores, targets) # score(실제값)과 target(예측값)을 이용해 crossentropyloss 구함
+        losses.append(loss.item())  # loss값 쌓기
 
         # backward
-        optimizer.zero_grad()
-        loss.backward()
+        optimizer.zero_grad()  # optimaizer 초기화  
+        loss.backward() # 오차만큼 다시 backpropagation 시행
 
         # gradient descent or adam step
-        optimizer.step()
+        optimizer.step()  # step 다시 정리 
 
     print(f"Cost at epoch {epoch} is {sum(losses)/len(losses)}")
+
+
 
 # Check accuracy on training to see how good our model is
 def check_accuracy(loader, model):
@@ -128,15 +129,17 @@ def check_accuracy(loader, model):
             y = y.to(device=device)
 
             scores = model(x)
-            _, predictions = scores.max(1)
-            num_correct += (predictions == y).sum()
-            num_samples += predictions.size(0)
+            print(scores)  # size, 그냥 프린트하면 값나옴
+            _, predictions = scores.max(1)  # scores. max(1) 1이 뭔지 알아야하고, 왜 아웃풋 값 1이 뭘 의미하는 지!!!
+            
+            num_correct += (predictions == y).sum() # 
+            num_samples += predictions.size(0)   # batch size를 64로 정했으니까 한 루프당 64/// minibatch = 64  
 
         print(
             f"Got {num_correct} / {num_samples} with accuracy {float(num_correct)/float(num_samples)*100:.2f}"
-        )
+        )             # 정확도 
 
-    model.train()
+    #model.train()
 
 
 print("Checking accuracy on Training Set")
