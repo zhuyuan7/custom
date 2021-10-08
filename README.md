@@ -1,6 +1,6 @@
 # custom
 
-epoch = 10  <br>
+- epoch = 10  <br>
  <br>
  <br>
 Checking accuracy on Training Set
@@ -13,7 +13,7 @@ Got 3253 / 10000 with accuracy 32.53
 <br>
 <br>
 
-epoch = 50  <br>
+- epoch = 50  <br>
  <br>
  
 Checking accuracy on Training Set
