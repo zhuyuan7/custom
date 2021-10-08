@@ -25,7 +25,7 @@ class CustomImageDataset(Dataset):
         return len(self.img_labels)
         #print(__len__)  # 50000
     
-    def __getitem__(self, idx):  # 데이터 셋에서  한 개의 데이터를 가져오는 함수 정의 , #샘플 반환(이미지와 라벨 dict형태로반환)
+    def __getitem__(self, idx):  # 데이터 셋에서  한 개의 데이터를 가져오는 함수 정의 
         #img_file = glob.glob(os.path.join(img_dir, "*.jpg"))
         img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx,0])
        
@@ -37,15 +37,6 @@ class CustomImageDataset(Dataset):
             image = self.transforms(image)
           
         return (image, y_label)
-<<<<<<< HEAD
-        
 
-        
-        
-=======
-
-
-        
-        
-
->>>>>>> cbe75ae5f3de4a87a31c8b773dce1e2064fee19c
+    
+    
