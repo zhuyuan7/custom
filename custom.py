@@ -38,11 +38,8 @@ class CustomImageDataset(Dataset):
             image = self.transforms(image)
           
         return (image, y_label)
-<<<<<<< HEAD
-        
+
 
         
         
-=======
 
->>>>>>> 17e28690fd65096ed6396d322f202fd9512b243d
