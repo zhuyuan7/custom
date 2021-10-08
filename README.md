@@ -1,4 +1,4 @@
-# custom
+# train.py
 
 - epoch = 10  <br>
  <br>
