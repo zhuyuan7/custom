@@ -123,7 +123,7 @@ def check_accuracy(loader, model):
             y = y.to(device=device)
 
             scores = model(x)
-            print(scores)  # size, 그냥 프린트하면 값나옴
+            print(scores) 
             _, predictions = scores.max(1)  # scores. max(1) 1이 뭔지 알아야하고, 왜 아웃풋 값 1이 뭘 의미하는 지!!!
             
             num_correct += (predictions == y).sum() # 
