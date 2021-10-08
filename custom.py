@@ -7,11 +7,11 @@ from torchvision.io import read_image
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from torchvision.transforms import ToTensor, Compose
-from torch.utils.data.dataset import random_split
-import torch.optim as optim
 from skimage import io
 import torch.nn.functional as F 
 from PIL import Image
+
+
 
 class CustomImageDataset(Dataset):
     def __init__(self, annotations_file, img_dir, transforms=None): # 내가 필요한 것들 (데이터 셋을 가져와서 선처리)
