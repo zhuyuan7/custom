@@ -1,5 +1,9 @@
 import os 
 import pandas as pd
+from skimage import io
+import os
+from aps import parse_opt
+
 import torch
 import torch.nn as nn
 import torchvision
@@ -9,139 +13,159 @@ import torchvision.transforms as transforms
 from torchvision.transforms import ToTensor, Compose
 from torch.utils.data.dataset import random_split
 import torch.optim as optim
-from skimage import io
+from torch.optim import lr_scheduler
 import torch.nn.functional as F 
-from model import CNN
+
 # import custom
 from custom import CustomImageDataset
-import os
+from model import CNN
 
 
 # RuntimeError : CUDA error: device-side assert triggered
-os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+#os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # 다른 Gpu 사용 어떻게 하는 지 
 print(f"Using {device} System")
 
 
-# Hyperparameters
-in_channels = 3
-num_classes = 100
-learning_rate = 1e-3  #10 의 -3승
-batch_size = 64  # 2의 승수 사용  한 minibache당 데이터수가 64, 남는 거는 자유롭게 
-num_epochs = 10
 
-transforms = transforms.Compose(   # 쉽게 말해 우리의 데이터를 전처리하는 패키지. # 이미지의 경우 픽셀 값 하나는 0 ~ 255 값을 갖는다. 
-    [transforms.ToTensor(),   # ToTensor()로 타입 변경시 0 ~ 1 사이의 값으로 바뀜
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])   # -1~ 1 사이로 normalize 함
-    #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])  
-
-print("ok")   
+def main(opt):
+    # RuntimeError : CUDA error: device-side assert triggered
 
 
-# Load Data
-dataset = CustomImageDataset(
-    annotations_file="/home/joo/archive/train.csv",
-    img_dir="/home/joo/archive/train_images",
-    transforms = transforms
-    )
+    train_transforms = transforms.Compose(   # 쉽게 말해 우리의 데이터를 전처리하는 패키지. # 이미지의 경우 픽셀 값 하나는 0 ~ 255 값을 갖는다. 
+        [transforms.RandomCrop(32, padding=4),  #  랜덤한 부분을 [size, size] 크기로 잘라냄. input 이미지가 output 크기보다 작으면 padding추가 가능
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),   # ToTensor()로 타입 변경시 0 ~ 1 사이의 값으로 바뀜
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])   # -1~ 1 사이로 normalize 함
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])  
 
-test_dataset = CustomImageDataset(
-    annotations_file="/home/joo/archive/test.csv",
-    img_dir="/home/joo/archive/test_images",
-    transforms = transforms
-    )
+    test_transforms = transforms.Compose(   # 쉽게 말해 우리의 데이터를 전처리하는 패키지. # 이미지의 경우 픽셀 값 하나는 0 ~ 255 값을 갖는다. 
+        [transforms.ToTensor(),   # ToTensor()로 타입 변경시 0 ~ 1 사이의 값으로 바뀜
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])   # -1~ 1 사이로 normalize 함
+        #transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])  
 
-print(len(dataset), len(test_dataset))
-
-
-#lengths = [int(len(dataset)*0.8), int(len(dataset)*0.2)]
-#train_set, test_set = torch.utils.data.random_split(dataset, lengths)
+    print("ok")   
 
 
-train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-test_loader = DataLoader(test_dataset , batch_size=batch_size, shuffle=True, num_workers=0)
+    # Load Data
+    train_dataset = CustomImageDataset(
+        annotations_file="/home/joo/archive/train.csv",
+        img_dir="/home/joo/archive/train_images",
+        train_transforms = train_transforms
+        )
+
+    test_dataset = CustomImageDataset(
+        annotations_file="/home/joo/archive/test.csv",
+        img_dir="/home/joo/archive/test_images",
+        test_transforms = test_transforms
+        )
+        
+    print(len(train_dataset), len(test_dataset))
 
 
+    train_loader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True, num_workers=opt.num_workers)
+    test_loader = DataLoader(test_dataset , batch_size=opt.batch_size, shuffle=False, num_workers=opt.num_workers)
 
 
-for X, y in train_loader:
-    print(X) # tesor
-    print(y) # label
-    break
+    # for X, y in test_loader:
+    #     print(X) # tesor
+    #     print(y) # label
+    #     break
+
+
+    # Model
+    model = CNN(in_channels=opt.in_channels, num_classes=opt.num_classes).to(device)
+    # model = CNN().to(device)
+
+
     
-# Model
-model = CNN(in_channels=in_channels, num_classes=num_classes).to(device)
 
 
-# Loss and optimizer
-criterion = nn.CrossEntropyLoss()  # nn.CrossEntropyLoss()의 경우 기본적으로 LogSoftmax()가 내장. 
-                                   # 실제 값과 예측값의 차이 (dissimilarity) 계산한다는 관점에서 cross-entropy 사용하는 것
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # Loss and optimizer
+    criterion = nn.CrossEntropyLoss()  # nn.CrossEntropyLoss()의 경우 기본적으로 LogSoftmax()가 내장. 
+                                    # 실제 값과 예측값의 차이 (dissimilarity) 계산한다는 관점에서 cross-entropy 사용하는 것
+    
+    optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate)
+    # exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
 
+    model.train()
 
-model.train()
-# Train Network
-for epoch in range(num_epochs):
-    losses = []
+    # Train Network
+    for epoch in range(opt.num_epochs):
 
-    for batch_idx, (data, targets) in enumerate(train_loader):
-        # Get data to cuda if possible
-        data = data.to(device=device) # 학습용 data 불러옴 (32*32)
-        targets = targets.to(device=device) 
+        losses = []
 
-        # forward
-        scores = model(data) # score 구함
-        loss = criterion(scores, targets) # score(실제값)과 target(예측값)을 이용해 crossentropyloss 구함
-        losses.append(loss.item())  # loss값 쌓기
+        for batch_idx, (data, targets) in enumerate(train_loader):
+            # Get data to cuda if possible
+            image = data.to(device=device) # 학습용 data 불러옴 (32*32)
+            label = targets.to(device=device) 
 
-        # backward
-        optimizer.zero_grad()  # optimaizer 초기화  
-        loss.backward() # 오차만큼 다시 backpropagation 시행
+            #print("target: ", targets.shape)
+            #print("data: ", data.shape)
+            
+            # forward
+            scores = model(image) # score 구함 ########## here
+           # print("here========== : ", scores.shape)
+            #print("here========== : ", label.shape)
+            loss = criterion(scores, label) # score(실제값)과 target(예측값)을 이용해 crossentropyloss 구함
 
-        # gradient descent or adam step
-        optimizer.step()  # step 다시 정리 
+            # print(scores.shape)
+            # print(label.shape)
+            # print(label)
+            # print(scores)
+            
 
-    print(f"Cost at epoch {epoch} is {sum(losses)/len(losses)}")
+            losses.append(loss.item())  # loss값 쌓기
 
+            # backward
+            optimizer.zero_grad()  # optimaizer 초기화  
+            loss.backward() # 오차만큼 다시 backpropagation 시행
+
+            # gradient descent or adam step
+            optimizer.step()  # step 다시 정리 
+            # exp_lr_scheduler.step()
+            
+        print(f"Cost at epoch {epoch} is {sum(losses)/len(losses)}")
+
+        
+    print("Checking accuracy on Training Set")
+    check_accuracy(train_loader, model)
+
+    print("Checking accuracy on Test Set")
+    check_accuracy(test_loader, model)
 
 
 # Check accuracy on training to see how good our model is
-def check_accuracy(loader, model):
+def check_accuracy(test_loader, model):
     num_correct = 0
     num_samples = 0
 
-    #test  시작
+    #test  시작 
     model.eval()
+    
 
     with torch.no_grad():
-        for x, y in loader:
-            x = x.to(device=device)
-            y = y.to(device=device)
+        for data, targets in test_loader:
+            image = data.to(device=device)
+            label = targets.to(device=device)
 
-            scores = model(x)
-            print(scores) 
-            _, predictions = scores.max(1)  # scores. max(1) 1이 뭔지 알아야하고, 왜 아웃풋 값 1이 뭘 의미하는 지!!!
+            scores = model(image)
+            #print(scores)  # size, 그냥 프린트하면 값나옴
+            _, predictions = scores.max(1)  
             
-            num_correct += (predictions == y).sum() # 
+            num_correct += (predictions == label).sum()  
             num_samples += predictions.size(0)   # batch size를 64로 정했으니까 한 루프당 64/// minibatch = 64  
 
         print(
             f"Got {num_correct} / {num_samples} with accuracy {float(num_correct)/float(num_samples)*100:.2f}"
         )             # 정확도 
 
-    #model.train()
+   
 
-
-print("Checking accuracy on Training Set")
-check_accuracy(train_loader, model)
-
-print("Checking accuracy on Test Set")
-check_accuracy(test_loader, model)
-
-
-
-
+if __name__ == "__main__":
+    opt = parse_opt()
+    main(opt)
