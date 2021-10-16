@@ -74,7 +74,7 @@ class VGG16(nn.Module):
         self.fc1 = nn.Linear(512, 256)
         self.relu6_1 = nn.ReLU(inplace = True)
         self.dropout6_1 = nn.Dropout(p=opt.drop_prob)
-        self.fc2 = nn.Linear(512, 256)
+        self.fc2 = nn.Linear(256, 64)
         self.relu6_2 = nn.ReLU(inplace = True)
         self.dropout6_2 = nn.Dropout(p=opt.drop_prob)
         self.fc3 = nn.Linear(opt.batch_size, opt.num_classes)
@@ -125,8 +125,9 @@ class VGG16(nn.Module):
         x = self.dropout6_1(x)
         print("dropout6_1", x.size())  # dropout6_1 torch.Size([64, 256])
        
-       
+
        # RuntimeError: CUDA error: CUBLAS_STATUS_INVALID_VALUE when calling `cublasSgemm( handle, opa, opb, m, n, k, &alpha, a, lda, b, ldb, &beta, c, ldc)`
+       # self.fc2 = nn.Linear(256, 64)  사이즈 맞춰주기!!! 
         x = self.relu6_2(self.fc2(x))
         print("relu6_2", x.size()) 
        
